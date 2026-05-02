@@ -1,0 +1,185 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MC TIERS GOD FINAL</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Press Start 2P', cursive; background:#0b1220; color:white; margin:0; }
+header { background:#111827; padding:15px; text-align:center; }
+input, button { padding:8px; margin:5px; border-radius:6px; border:none; }
+.container { padding:20px; }
+.hidden { display:none; }
+.player { background:#374151; padding:8px; border-radius:8px; display:flex; gap:5px; margin:8px 0; }
+.panel { background:#111827; padding:10px; border-radius:10px; margin-top:20px; }
+</style>
+</head>
+<body><header>
+<h1>🔥 MC TIERS GOD FINAL</h1>
+<input type="text" id="search" placeholder="Search..." onkeyup="searchPlayer()">
+</header><div class="container" id="players"></div>
+<div class="container panel" id="leaderboard"></div>
+<div class="container panel" id="compare"></div>
+<div class="container panel" id="matches"></div><div class="container" id="login">
+<h2>Admin Login</h2>
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div><div class="container hidden panel" id="admin">
+<h2>⚙️ ADMIN PANEL</h2>
+<input id="pname" placeholder="Player Name">
+<input id="sword" placeholder="Sword Tier">
+<input id="uhc" placeholder="UHC Tier">
+<input id="axe" placeholder="Axe Tier">
+<input id="icon" placeholder="Icon URL">
+<button onclick="addPlayer()">➕ Add Player</button><h3>⚔️ Add Match</h3>
+<select id="m1"></select>
+<select id="m2"></select>
+<select id="winner">
+<option value="1">Player 1 Wins</option>
+<option value="2">Player 2 Wins</option>
+</select>
+<button onclick="addMatch()">Add Match</button><h3>Manage Players</h3>
+<div id="adminList"></div>
+</div><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script><script>
+const firebaseConfig = {
+  apiKey: "PUT_HERE",
+  authDomain: "PUT_HERE",
+  databaseURL: "PUT_HERE",
+  projectId: "PUT_HERE",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const admins = [
+{user:"SASUKE", pass:"ADMIN5485481vsjc"},
+{user:"SAZETT", pass:"FOBhdkacH_2781"}
+];
+
+let players = [];
+let matches = [];
+let editIndex = null;
+
+const tierPoints = {
+"HT1":120,"LT1":90,"HT2":60,"LT2":30,
+"HT3":20,"LT3":12,"HT4":8,"LT4":6,
+"HT5":4,"LT5":2
+};
+
+function login(){
+let ok = admins.find(a=>a.user===user.value && a.pass===pass.value);
+if(ok){ admin.classList.remove("hidden"); }
+}
+
+function getPoints(t){ return tierPoints[t] || 0; }
+function calcOverall(p){ return getPoints(p.sword)+getPoints(p.uhc)+getPoints(p.axe); }
+
+function addPlayer(){
+let p = {name:pname.value,sword:sword.value.toUpperCase(),uhc:uhc.value.toUpperCase(),axe:axe.value.toUpperCase(),icon:icon.value};
+if(editIndex!==null){ players[editIndex]=p; db.ref("players").set(players); editIndex=null; }
+else db.ref("players").push(p);
+}
+
+function edit(i){ let p=players[i]; pname.value=p.name; sword.value=p.sword; uhc.value=p.uhc; axe.value=p.axe; icon.value=p.icon; editIndex=i; }
+function del(i){ players.splice(i,1); db.ref("players").set(players); }
+
+// 🔥 MATCH SYSTEM
+function addMatch(){
+let p1 = m1.value;
+let p2 = m2.value;
+let win = winner.value;
+
+let match = {p1,p2,winner: win=="1"?p1:p2, time: Date.now()};
+db.ref("matches").push(match);
+}
+
+function renderMatches(){
+let m = document.getElementById("matches");
+m.innerHTML = "<h2>⚔️ Match History</h2>";
+
+matches.slice().reverse().forEach(x=>{
+m.innerHTML += `<p>${x.p1} vs ${x.p2} → 🏆 ${x.winner}</p>`;
+});
+}
+
+function render(){
+let container = document.getElementById("players");
+container.innerHTML="";
+
+let sorted = [...players].sort((a,b)=>calcOverall(b)-calcOverall(a));
+
+sorted.forEach(p=>{
+let div = document.createElement("div");
+div.className="player";
+div.innerHTML = `<img src='${p.icon}' width='30'><div><b>${p.name}</b><br>🏆 ${calcOverall(p)} pts</div>`;
+container.appendChild(div);
+});
+
+renderLeaderboard();
+renderAdmin();
+renderCompare();
+renderMatches();
+}
+
+function renderLeaderboard(){
+let lb = document.getElementById("leaderboard");
+let sorted = [...players].sort((a,b)=>calcOverall(b)-calcOverall(a));
+
+lb.innerHTML="<h2>🏆 Leaderboard</h2>";
+sorted.forEach((p,i)=>{
+lb.innerHTML += `<p>#${i+1} ${p.name} (${calcOverall(p)})</p>`;
+});
+}
+
+function renderAdmin(){
+let list = document.getElementById("adminList");
+let s1 = document.getElementById("m1");
+let s2 = document.getElementById("m2");
+
+list.innerHTML="";
+s1.innerHTML="";
+s2.innerHTML="";
+
+players.forEach((p,i)=>{
+list.innerHTML += `<p>${p.name} <button onclick="edit(${i})">✏️</button><button onclick="del(${i})">❌</button></p>`;
+s1.innerHTML += `<option>${p.name}</option>`;
+s2.innerHTML += `<option>${p.name}</option>`;
+});
+}
+
+// compare
+function renderCompare(){
+let c = document.getElementById("compare");
+
+c.innerHTML = `<h2>⚔️ Compare</h2><select id='c1'></select><select id='c2'></select><button onclick='doCompare()'>Compare</button><div id='result'></div>`;
+
+players.forEach(p=>{
+c1.innerHTML += `<option>${p.name}</option>`;
+c2.innerHTML += `<option>${p.name}</option>`;
+});
+}
+
+function doCompare(){
+let p1 = players.find(p=>p.name===c1.value);
+let p2 = players.find(p=>p.name===c2.value);
+
+let s1 = calcOverall(p1);
+let s2 = calcOverall(p2);
+let winner = s1>s2?p1.name:p2.name;
+
+result.innerHTML = `<p>${p1.name}: ${s1}</p><p>${p2.name}: ${s2}</p><h3>🏆 ${winner}</h3>`;
+}
+
+function searchPlayer(){
+let val = search.value.toLowerCase();
+document.querySelectorAll(".player").forEach(p=>{
+p.style.display = p.innerText.toLowerCase().includes(val)?"flex":"none";
+});
+}
+
+// realtime
+ db.ref("players").on("value", snap=>{ players = snap.val()?Object.values(snap.val()):[]; render(); });
+ db.ref("matches").on("value", snap=>{ matches = snap.val()?Object.values(snap.val()):[]; renderMatches(); });
+</script></body>
+  </html>
