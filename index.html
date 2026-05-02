@@ -1,306 +1,308 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZeroTiers</title>
 
 <style>
-body {
+body{
   margin:0;
-  font-family: Arial, sans-serif;
-  background:#0f0f0f;
+  font-family:Arial;
+  background:#0b0b0b;
   color:white;
+  animation:fade 0.4s ease-in;
 }
 
-header {
-  background:#1a1a1a;
+@keyframes fade{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+header{
+  background:#151515;
   padding:15px;
   text-align:center;
-  border-bottom:2px solid #ff9800;
+  border-bottom:2px solid orange;
 }
 
-h1 { margin:0; font-size:24px; }
+.container{padding:15px;}
 
-.container { padding:15px; }
-
-.card {
-  background:#1e1e1e;
+.card{
+  background:#1c1c1c;
   padding:15px;
-  border-radius:10px;
   margin-top:15px;
+  border-radius:10px;
+  transition:0.2s;
 }
 
-input, button, select {
+.card:hover{transform:scale(1.01);}
+
+input,button,select{
   padding:8px;
   margin:5px;
   border-radius:6px;
   border:none;
 }
 
-button {
-  background:#ff9800;
-  color:black;
+button{
+  background:orange;
   font-weight:bold;
   cursor:pointer;
 }
 
-.player {
+.player{
   display:flex;
   justify-content:space-between;
-  padding:8px;
   background:#2a2a2a;
+  padding:8px;
   margin:5px 0;
   border-radius:6px;
+  cursor:pointer;
+  transition:0.2s;
 }
 
-.rank { color:gold; }
+.player:hover{
+  background:#3a3a3a;
+  transform:scale(1.01);
+}
 
-.hidden { display:none; }
+.rank{color:gold;}
+
+.hidden{display:none;}
+
+/* PROFILE */
+.profileCard{
+  display:flex;
+  gap:15px;
+  align-items:center;
+  background:#222;
+  padding:15px;
+  border-radius:10px;
+  animation:pop 0.3s ease;
+}
+
+@keyframes pop{
+  from{transform:scale(0.9);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+
+.profileCard img{
+  width:90px;
+  height:90px;
+  border-radius:10px;
+  border:2px solid orange;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-<h1>ZeroTiers System</h1>
-<input id="search" placeholder="Search player..." onkeyup="searchPlayer()">
+<h1>🔥 ZeroTiers System</h1>
+<input id="search" placeholder="Search player..." oninput="searchPlayer()">
 </header>
 
 <div class="container">
 
-<!-- LEADERBOARD -->
 <div class="card">
 <h2>🏆 Leaderboard</h2>
-<div id="leaderboardList"></div>
+<div id="leaderboard"></div>
 </div>
 
-<!-- PLAYERS -->
 <div class="card">
 <h2>👤 Players</h2>
 <div id="players"></div>
 </div>
 
-<!-- MATCH HISTORY -->
-<div class="card">
-<h2>⚔️ Match History</h2>
-<div id="matches"></div>
+<div class="card hidden" id="profile">
+<h2>📄 Profile</h2>
+<div id="profileBox"></div>
 </div>
 
-<!-- LOGIN -->
+<div class="card">
+<h2>⚔️ Compare</h2>
+<select id="c1"></select>
+<select id="c2"></select>
+<button onclick="compare()">Compare</button>
+<div id="compareOut"></div>
+</div>
+
 <div class="card" id="loginBox">
 <h2>Admin Login</h2>
-<input id="user" placeholder="Username">
-<input id="pass" type="password" placeholder="Password">
+<input id="u">
+<input id="p" type="password">
 <button onclick="login()">Login</button>
 </div>
 
-<!-- ADMIN -->
 <div class="card hidden" id="admin">
 <h2>⚙️ Admin Panel</h2>
 
 <input id="name" placeholder="Name">
+
 <input id="sword" placeholder="Sword Tier">
 <input id="uhc" placeholder="UHC Tier">
 <input id="axe" placeholder="Axe Tier">
 <input id="mace" placeholder="Mace Tier">
 <input id="spear" placeholder="Spear Tier">
-<input id="icon" placeholder="Icon URL">
 
 <button onclick="addPlayer()">Add / Update</button>
 
-<h3>Add Match</h3>
+<h3>Manual Controls</h3>
+<div id="adminList"></div>
+
+<h3>Match System</h3>
 <select id="p1"></select>
 <select id="p2"></select>
-<select id="winner">
+<select id="win">
 <option value="1">P1 Wins</option>
 <option value="2">P2 Wins</option>
 </select>
 <button onclick="addMatch()">Add Match</button>
-
-<h3>Leaderboard Control</h3>
-<div id="adminList"></div>
 </div>
 
 </div>
 
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "PUT_HERE",
-  authDomain: "PUT_HERE",
-  databaseURL: "PUT_HERE",
-  projectId: "PUT_HERE",
+
+/* FIREBASE */
+const firebaseConfig={
+apiKey:"PUT",
+authDomain:"PUT",
+databaseURL:"PUT",
+projectId:"PUT"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
-/* LOGIN */
-const adminUser = "admin";
-const adminPass = "Zero1234";
+/* ADMIN */
+const ADMIN_USER="ZeroAdmin";
+const ADMIN_PASS="Z0R3T13RS#2026!";
 
 /* DATA */
-let players = [];
-let matches = [];
-let editIndex = null;
+let players=[];
 
-/* DOM */
-const loginBox = document.getElementById("loginBox");
-const admin = document.getElementById("admin");
-
-/* TIER SYSTEM */
-const tier = {
-HT1:640, LT1:320,
-HT2:160, LT2:80,
-HT3:40, LT3:20,
-HT4:10, LT4:5,
-HT5:2, LT5:1
+/* YOUR TIER SYSTEM */
+const T={
+HT1:120, LT1:90,
+HT2:60, LT2:30,
+HT3:20, LT3:12,
+HT4:9, LT4:6,
+HT5:4, LT5:2
 };
 
-function pts(t){ return tier[t?.toUpperCase()] || 0; }
+const pts=t=>T[t?.toUpperCase()]||0;
 
+/* SCORE */
 function score(p){
-  return pts(p.sword)+pts(p.uhc)+pts(p.axe)+pts(p.mace)+pts(p.spear);
+return pts(p.sword)+pts(p.uhc)+pts(p.axe)+pts(p.mace)+pts(p.spear);
 }
 
-function rank(s){
-  if(s>1000) return "GOD";
-  if(s>600) return "S+";
-  if(s>300) return "S";
-  if(s>150) return "A";
-  return "B";
+/* TITLE SYSTEM */
+function title(s){
+if(s>=300)return "COMBAT MASTER";
+if(s>=200)return "Combat MASTER BEGINNER";
+if(s>=100)return "COMBAT NOVICE";
+if(s>=60)return "COMBAT BEGINNER";
+if(s>=10)return "NOOBIE";
+return "TRAINING";
 }
 
-/* LOGIN FIXED */
+/* LOGIN */
 function login(){
-  const u = document.getElementById("user").value;
-  const p = document.getElementById("pass").value;
-
-  if(u===adminUser && p===adminPass){
-    admin.classList.remove("hidden");
-    loginBox.classList.add("hidden");
-  } else {
-    alert("Wrong login");
-  }
+if(u.value===ADMIN_USER && p.value===ADMIN_PASS){
+admin.classList.remove("hidden");
+loginBox.classList.add("hidden");
+}else alert("Wrong login");
 }
 
-/* PLAYER SYSTEM */
+/* ADD PLAYER */
 function addPlayer(){
-  const p = {
-    name:name.value,
-    sword:sword.value,
-    uhc:uhc.value,
-    axe:axe.value,
-    mace:mace.value,
-    spear:spear.value,
-    icon:icon.value
-  };
-
-  if(editIndex!==null){
-    players[editIndex]=p;
-    db.ref("players").set(players);
-    editIndex=null;
-  } else {
-    db.ref("players").push(p);
-  }
+db.ref("players").push({
+name:name.value,
+sword:sword.value,
+uhc:uhc.value,
+axe:axe.value,
+mace:mace.value,
+spear:spear.value
+});
 }
 
-/* MATCH */
-function addMatch(){
-  const a=p1.value;
-  const b=p2.value;
-  const win = winner.value=="1"?a:b;
+/* PROFILE WITH SKIN */
+function openProfile(p){
+profile.classList.remove("hidden");
 
-  db.ref("matches").push({
-    p1:a,
-    p2:b,
-    winner:win,
-    time:Date.now()
-  });
+profileBox.innerHTML=`
+<div class="profileCard">
+<img src="https://mc-heads.net/avatar/${p.name}">
+<div>
+<h2>${p.name}</h2>
+<p>🏆 Score: ${score(p)}</p>
+<p>⭐ Title: ${title(score(p))}</p>
+</div>
+</div>`;
 }
 
-/* EDIT SCORE (LEADERBOARD CONTROL) */
-function editScore(i){
-  let newScore = prompt("Set manual score for " + players[i].name);
-  if(newScore !== null){
-    players[i].manualScore = parseInt(newScore);
-    db.ref("players").set(players);
-  }
+/* SEARCH */
+function searchPlayer(){
+let v=search.value.toLowerCase();
+document.querySelectorAll(".player").forEach(p=>{
+p.style.display=p.innerText.toLowerCase().includes(v)?"flex":"none";
+});
 }
 
-/* DELETE */
-function del(i){
-  players.splice(i,1);
-  db.ref("players").set(players);
+/* COMPARE */
+function compare(){
+let a=players.find(x=>x.name===c1.value);
+let b=players.find(x=>x.name===c2.value);
+
+compareOut.innerHTML=`
+${a.name}: ${score(a)} (${title(score(a))})<br>
+${b.name}: ${score(b)} (${title(score(b))})<br>
+<h3>${score(a)>score(b)?a.name:b.name} Wins</h3>`;
 }
 
 /* RENDER */
 function render(){
 
-  /* PLAYERS */
-  playersDiv.innerHTML="";
-  let sorted=[...players].sort((a,b)=>score(b)-score(a));
+playersDiv.innerHTML="";
+leaderboard.innerHTML="";
+adminList.innerHTML="";
+p1.innerHTML="";
+p2.innerHTML="";
+c1.innerHTML="";
+c2.innerHTML="";
 
-  sorted.forEach(p=>{
-    playersDiv.innerHTML+=`
-    <div class="player">
-      <span>${p.name}</span>
-      <span>${score(p)} pts <b class="rank">${rank(score(p))}</b></span>
-    </div>`;
-  });
+let sorted=[...players].sort((a,b)=>score(b)-score(a));
 
-  /* LEADERBOARD */
-  leaderboardList.innerHTML="";
-  sorted.forEach((p,i)=>{
-    leaderboardList.innerHTML+=`#${i+1} ${p.name} - ${score(p)} pts<br>`;
-  });
+sorted.forEach((p,i)=>{
 
-  /* ADMIN */
-  adminList.innerHTML="";
-  p1.innerHTML="";
-  p2.innerHTML="";
+playersDiv.innerHTML+=`
+<div class="player" onclick='openProfile(${JSON.stringify(p)})'>
+${p.name}
+<span>${score(p)} <b class="rank">${title(score(p))}</b></span>
+</div>`;
 
-  players.forEach((p,i)=>{
-    adminList.innerHTML+=`
-    <div>
-      ${p.name}
-      <button onclick="editScore(${i})">Score</button>
-      <button onclick="del(${i})">Delete</button>
-    </div>`;
+leaderboard.innerHTML+=`#${i+1} ${p.name} - ${score(p)} (${title(score(p))})<br>`;
 
-    p1.innerHTML+=`<option>${p.name}</option>`;
-    p2.innerHTML+=`<option>${p.name}</option>`;
-  });
+p1.innerHTML+=`<option>${p.name}</option>`;
+p2.innerHTML+=`<option>${p.name}</option>`;
+c1.innerHTML+=`<option>${p.name}</option>`;
+c2.innerHTML+=`<option>${p.name}</option>`;
 
-  /* MATCHES */
-  matchesDiv.innerHTML="";
-  matches.forEach(m=>{
-    matchesDiv.innerHTML+=`
-    ${m.p1} vs ${m.p2} → Winner: <b>${m.winner}</b><br>`;
-  });
-}
-
-/* SEARCH */
-function searchPlayer(){
-  let v=search.value.toLowerCase();
-  document.querySelectorAll(".player").forEach(p=>{
-    p.style.display=p.innerText.toLowerCase().includes(v)?"flex":"none";
-  });
+adminList.innerHTML+=`
+<div>${p.name}</div>`;
+});
 }
 
 /* FIREBASE */
 db.ref("players").on("value",s=>{
-  players=s.val()?Object.values(s.val()):[];
-  render();
-});
-
-db.ref("matches").on("value",s=>{
-  matches=s.val()?Object.values(s.val()):[];
-  render();
+players=s.val()?Object.values(s.val()):[];
+render();
 });
 </script>
 
