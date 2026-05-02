@@ -1,37 +1,36 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MC TIERS GOD - ZERO TIERS UPGRADED</title><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"><style>
+<title>ZeroTiers</title>
+
+<style>
 body {
   margin:0;
-  font-family:'Press Start 2P', cursive;
+  font-family: Arial, sans-serif;
+  background:#0f0f0f;
   color:white;
-  background: radial-gradient(circle at top, #220000, #000000);
-  overflow-x:hidden;
-}
-
-/* FIRE BACKGROUND EFFECT */
-.fire-bg {
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  z-index:-1;
-  background: radial-gradient(circle at bottom, rgba(255,60,0,0.25), transparent 60%),
-              radial-gradient(circle at top, rgba(255,140,0,0.15), transparent 70%);
-  animation: flicker 2s infinite alternate;
-}
-
-@keyframes flicker {
-  0% { filter: brightness(1); }
-  100% { filter: brightness(1.3); }
 }
 
 header {
-  background:#111;
+  background:#1a1a1a;
   padding:15px;
   text-align:center;
-  border-bottom:2px solid orange;
+  border-bottom:2px solid #ff9800;
+}
+
+h1 { margin:0; font-size:24px; }
+
+.container {
+  padding:15px;
+}
+
+.card {
+  background:#1e1e1e;
+  padding:15px;
+  border-radius:10px;
+  margin-top:15px;
 }
 
 input, button, select {
@@ -39,67 +38,97 @@ input, button, select {
   margin:5px;
   border-radius:6px;
   border:none;
-  font-family:inherit;
 }
 
 button {
-  cursor:pointer;
-  background:orange;
+  background:#ff9800;
   color:black;
   font-weight:bold;
+  cursor:pointer;
 }
-
-.container { padding:20px; }
-.panel { background:rgba(20,20,20,0.85); padding:15px; border-radius:10px; margin-top:20px; }
-.hidden { display:none; }
 
 .player {
-  background:#222;
-  padding:10px;
-  border-radius:10px;
   display:flex;
-  gap:10px;
-  align-items:center;
-  margin:8px 0;
+  justify-content:space-between;
+  padding:8px;
+  background:#2a2a2a;
+  margin:5px 0;
+  border-radius:6px;
 }
+.rank { color:gold; }
 
-.player img { border-radius:6px; }
+.hidden { display:none; }
+</style>
+</head>
 
-.rank {
-  font-size:10px;
-  color:gold;
-}
-</style></head><body>
-<div class="fire-bg"></div><header>
-<h1>🔥 MC TIERS GOD - ZERO TIERS UPGRADED</h1>
-<input id="search" placeholder="Search player..." onkeyup="searchPlayer()" />
-</header><div class="container" id="players"></div>
-<div class="container panel" id="leaderboard"></div>
-<div class="container panel" id="compare"></div>
-<div class="container panel" id="matches"></div><!-- LOGIN --><div class="container" id="login">
+<body>
+
+<header>
+<h1>ZeroTiers System</h1>
+<input id="search" placeholder="Search player..." onkeyup="searchPlayer()">
+</header>
+
+<div class="container">
+
+<!-- LEADERBOARD -->
+<div class="card" id="leaderboard">
+<h2>🏆 Leaderboard</h2>
+<div id="leaderboardList"></div>
+</div>
+
+<!-- PLAYERS -->
+<div class="card" id="playersBox">
+<h2>👤 Players</h2>
+<div id="players"></div>
+</div>
+
+<!-- MATCH HISTORY -->
+<div class="card">
+<h2>⚔️ Match History</h2>
+<div id="matches"></div>
+</div>
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
 <h2>Admin Login</h2>
 <input id="user" placeholder="Username">
 <input id="pass" type="password" placeholder="Password">
 <button onclick="login()">Login</button>
-</div><!-- ADMIN --><div class="container hidden panel" id="admin">
-<h2>⚙️ ADMIN PANEL</h2><input id="pname" placeholder="Player Name">
-<input id="sword" placeholder="Sword Tier (HT1, LT1...)">
+</div>
+
+<!-- ADMIN -->
+<div class="card hidden" id="admin">
+<h2>⚙️ Admin Panel</h2>
+
+<input id="name" placeholder="Name">
+<input id="sword" placeholder="Sword Tier">
 <input id="uhc" placeholder="UHC Tier">
 <input id="axe" placeholder="Axe Tier">
 <input id="mace" placeholder="Mace Tier">
 <input id="spear" placeholder="Spear Tier">
 <input id="icon" placeholder="Icon URL">
-<button onclick="addPlayer()">➕ Add / Update Player</button><h3>⚔️ Add Match</h3>
-<select id="m1"></select>
-<select id="m2"></select>
+
+<button onclick="addPlayer()">Add / Update</button>
+
+<h3>Add Match</h3>
+<select id="p1"></select>
+<select id="p2"></select>
 <select id="winner">
-<option value="1">Player 1 Wins</option>
-<option value="2">Player 2 Wins</option>
+<option value="1">P1 Wins</option>
+<option value="2">P2 Wins</option>
 </select>
-<button onclick="addMatch()">Add Match</button><h3>Manage Players</h3>
+<button onclick="addMatch()">Add Match</button>
+
 <div id="adminList"></div>
-</div><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script><script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"></script><script>
-// FIREBASE (PUT YOUR CONFIG)
+</div>
+
+</div>
+
+<!-- FIREBASE COMPAT (FIXED) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
 const firebaseConfig = {
   apiKey: "PUT_HERE",
   authDomain: "PUT_HERE",
@@ -110,58 +139,50 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// ADMIN LOGIN
-const admins = [
-  {user:"Sasuke", pass:"abdelrhmfadf134"}
-];
+/* LOGIN */
+const adminUser = "admin";
+const adminPass = "Zero1234";
 
+/* DATA */
 let players = [];
 let matches = [];
 let editIndex = null;
 
-// 🔥 EXPONENTIAL TIER SYSTEM
-const tierPoints = {
-HT1: 640,
-LT1: 320,
-HT2: 160,
-LT2: 80,
-HT3: 40,
-LT3: 20,
-HT4: 10,
-LT4: 5,
-HT5: 2,
-LT5: 1
+/* TIER SYSTEM */
+const tier = {
+HT1:120, LT1:90,
+HT2:60, LT2:30,
+HT3:20, LT3:12,
+HT4:9, LT4:6,
+HT5:4, LT5:2
 };
 
-function getPoints(t){ return tierPoints[t?.toUpperCase()] || 0; }
+function pts(t){ return tier[t?.toUpperCase()] || 0; }
 
-function calcOverall(p){
-  return (
-    getPoints(p.sword) +
-    getPoints(p.uhc) +
-    getPoints(p.axe) +
-    getPoints(p.mace) +
-    getPoints(p.spear)
-  );
+function score(p){
+  return pts(p.sword)+pts(p.uhc)+pts(p.axe)+pts(p.mace)+pts(p.spear);
 }
 
-function getRank(score){
-  if(score > 1000) return "GOD";
-  if(score > 600) return "S+";
-  if(score > 300) return "S";
-  if(score > 150) return "A";
-  if(score > 80) return "B";
-  return "C";
+function rank(s){
+  if(s>1000) return "GOD";
+  if(s>600) return "S+";
+  if(s>300) return "S";
+  if(s>150) return "A";
+  return "B";
 }
 
+/* LOGIN */
 function login(){
-  let ok = admins.find(a=>a.user===user.value && a.pass===pass.value);
-  if(ok) document.getElementById("admin").classList.remove("hidden");
+  if(user.value===adminUser && pass.value===adminPass){
+    admin.classList.remove("hidden");
+    loginBox.classList.add("hidden");
+  }
 }
 
+/* PLAYERS */
 function addPlayer(){
-  let p = {
-    name:pname.value,
+  const p = {
+    name:name.value,
     sword:sword.value,
     uhc:uhc.value,
     axe:axe.value,
@@ -179,9 +200,68 @@ function addPlayer(){
   }
 }
 
+/* MATCH */
+function addMatch(){
+  const a = p1.value;
+  const b = p2.value;
+  const win = winner.value=="1"?a:b;
+
+  db.ref("matches").push({
+    p1:a,
+    p2:b,
+    winner:win,
+    time:Date.now()
+  });
+}
+
+/* RENDER */
+function render(){
+
+  /* PLAYERS */
+  playersDiv.innerHTML="";
+  let sorted=[...players].sort((a,b)=>score(b)-score(a));
+
+  sorted.forEach(p=>{
+    playersDiv.innerHTML+=`
+    <div class="player">
+      <span>${p.name}</span>
+      <span>${score(p)} pts <b class="rank">${rank(score(p))}</b></span>
+    </div>`;
+  });
+
+  /* LEADERBOARD */
+  leaderboardList.innerHTML="";
+  sorted.forEach((p,i)=>{
+    leaderboardList.innerHTML+=`#${i+1} ${p.name} - ${score(p)} pts<br>`;
+  });
+
+  /* ADMIN LIST */
+  adminList.innerHTML="";
+  p1.innerHTML="";
+  p2.innerHTML="";
+
+  players.forEach((p,i)=>{
+    adminList.innerHTML+=`
+    <div>${p.name}
+    <button onclick="edit(${i})">Edit</button>
+    <button onclick="del(${i})">Del</button></div>`;
+
+    p1.innerHTML+=`<option>${p.name}</option>`;
+    p2.innerHTML+=`<option>${p.name}</option>`;
+  });
+
+  /* MATCHES */
+  matchesDiv.innerHTML="";
+  matches.forEach(m=>{
+    matchesDiv.innerHTML+=`
+    ${m.p1} vs ${m.p2} → Winner: <b>${m.winner}</b><br>`;
+  });
+}
+
+/* EDIT / DELETE */
 function edit(i){
   let p=players[i];
-  pname.value=p.name;
+  name.value=p.name;
   sword.value=p.sword;
   uhc.value=p.uhc;
   axe.value=p.axe;
@@ -196,117 +276,25 @@ function del(i){
   db.ref("players").set(players);
 }
 
-function addMatch(){
-  let p1=m1.value;
-  let p2=m2.value;
-  let win = winner.value;
-
-  let match={p1,p2,winner:win=="1"?p1:p2,time:Date.now()};
-  db.ref("matches").push(match);
-}
-
-function render(){
-  let c=document.getElementById("players");
-  c.innerHTML="";
-
-  let sorted=[...players].sort((a,b)=>calcOverall(b)-calcOverall(a));
-
-  sorted.forEach(p=>{
-    let div=document.createElement("div");
-    let score=calcOverall(p);
-
-    div.className="player";
-    div.innerHTML=`
-      <img src='${p.icon}' width='40'>
-      <div>
-        <b>${p.name}</b><br>
-        🏆 ${score} pts <span class='rank'>[${getRank(score)}]</span>
-      </div>`;
-
-    c.appendChild(div);
-  });
-
-  renderLeaderboard();
-  renderAdmin();
-  renderCompare();
-}
-
-function renderLeaderboard(){
-  let lb=document.getElementById("leaderboard");
-  let sorted=[...players].sort((a,b)=>calcOverall(b)-calcOverall(a));
-
-  lb.innerHTML="<h2>🏆 LEADERBOARD</h2>";
-
-  sorted.forEach((p,i)=>{
-    lb.innerHTML+=`#${i+1} ${p.name} - ${calcOverall(p)} pts<br>`;
-  });
-}
-
-function renderAdmin(){
-  let list=document.getElementById("adminList");
-  let s1=document.getElementById("m1");
-  let s2=document.getElementById("m2");
-
-  list.innerHTML="";
-  s1.innerHTML="";
-  s2.innerHTML="";
-
-  players.forEach((p,i)=>{
-    list.innerHTML+=`
-      <p>${p.name}
-      <button onclick="edit(${i})">✏️</button>
-      <button onclick="del(${i})">❌</button></p>`;
-
-    s1.innerHTML+=`<option>${p.name}</option>`;
-    s2.innerHTML+=`<option>${p.name}</option>`;
-  });
-}
-
-function renderCompare(){
-  let c=document.getElementById("compare");
-
-  c.innerHTML=`
-  <h2>⚔️ Compare</h2>
-  <select id='c1'></select>
-  <select id='c2'></select>
-  <button onclick='doCompare()'>Compare</button>
-  <div id='result'></div>`;
-
-  players.forEach(p=>{
-    c1.innerHTML+=`<option>${p.name}</option>`;
-    c2.innerHTML+=`<option>${p.name}</option>`;
-  });
-}
-
-function doCompare(){
-  let p1=players.find(p=>p.name===c1.value);
-  let p2=players.find(p=>p.name===c2.value);
-
-  let s1=calcOverall(p1);
-  let s2=calcOverall(p2);
-
-  let w=s1>s2?p1.name:p2.name;
-
-  result.innerHTML=`${p1.name}: ${s1}<br>${p2.name}: ${s2}<h3>🏆 ${w}</h3>`;
-}
-
+/* SEARCH */
 function searchPlayer(){
   let v=search.value.toLowerCase();
-
   document.querySelectorAll(".player").forEach(p=>{
     p.style.display=p.innerText.toLowerCase().includes(v)?"flex":"none";
   });
 }
 
-// realtime
- db.ref("players").on("value",snap=>{
-  players=snap.val()?Object.values(snap.val()):[];
+/* FIREBASE */
+db.ref("players").on("value",s=>{
+  players=s.val()?Object.values(s.val()):[];
   render();
 });
 
- db.ref("matches").on("value",snap=>{
-  matches=snap.val()?Object.values(snap.val()):[];
+db.ref("matches").on("value",s=>{
+  matches=s.val()?Object.values(s.val()):[];
+  render();
 });
+</script>
 
-</script></body>
+</body>
   </html>
