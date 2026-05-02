@@ -22,9 +22,7 @@ header {
 
 h1 { margin:0; font-size:24px; }
 
-.container {
-  padding:15px;
-}
+.container { padding:15px; }
 
 .card {
   background:#1e1e1e;
@@ -55,6 +53,7 @@ button {
   margin:5px 0;
   border-radius:6px;
 }
+
 .rank { color:gold; }
 
 .hidden { display:none; }
@@ -71,13 +70,13 @@ button {
 <div class="container">
 
 <!-- LEADERBOARD -->
-<div class="card" id="leaderboard">
+<div class="card">
 <h2>🏆 Leaderboard</h2>
 <div id="leaderboardList"></div>
 </div>
 
 <!-- PLAYERS -->
-<div class="card" id="playersBox">
+<div class="card">
 <h2>👤 Players</h2>
 <div id="players"></div>
 </div>
@@ -119,12 +118,13 @@ button {
 </select>
 <button onclick="addMatch()">Add Match</button>
 
+<h3>Leaderboard Control</h3>
 <div id="adminList"></div>
 </div>
 
 </div>
 
-<!-- FIREBASE COMPAT (FIXED) -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
@@ -148,13 +148,17 @@ let players = [];
 let matches = [];
 let editIndex = null;
 
+/* DOM */
+const loginBox = document.getElementById("loginBox");
+const admin = document.getElementById("admin");
+
 /* TIER SYSTEM */
 const tier = {
-HT1:120, LT1:90,
-HT2:60, LT2:30,
-HT3:20, LT3:12,
-HT4:9, LT4:6,
-HT5:4, LT5:2
+HT1:640, LT1:320,
+HT2:160, LT2:80,
+HT3:40, LT3:20,
+HT4:10, LT4:5,
+HT5:2, LT5:1
 };
 
 function pts(t){ return tier[t?.toUpperCase()] || 0; }
@@ -171,15 +175,20 @@ function rank(s){
   return "B";
 }
 
-/* LOGIN */
+/* LOGIN FIXED */
 function login(){
-  if(user.value===adminUser && pass.value===adminPass){
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
+
+  if(u===adminUser && p===adminPass){
     admin.classList.remove("hidden");
     loginBox.classList.add("hidden");
+  } else {
+    alert("Wrong login");
   }
 }
 
-/* PLAYERS */
+/* PLAYER SYSTEM */
 function addPlayer(){
   const p = {
     name:name.value,
@@ -202,8 +211,8 @@ function addPlayer(){
 
 /* MATCH */
 function addMatch(){
-  const a = p1.value;
-  const b = p2.value;
+  const a=p1.value;
+  const b=p2.value;
   const win = winner.value=="1"?a:b;
 
   db.ref("matches").push({
@@ -212,6 +221,21 @@ function addMatch(){
     winner:win,
     time:Date.now()
   });
+}
+
+/* EDIT SCORE (LEADERBOARD CONTROL) */
+function editScore(i){
+  let newScore = prompt("Set manual score for " + players[i].name);
+  if(newScore !== null){
+    players[i].manualScore = parseInt(newScore);
+    db.ref("players").set(players);
+  }
+}
+
+/* DELETE */
+function del(i){
+  players.splice(i,1);
+  db.ref("players").set(players);
 }
 
 /* RENDER */
@@ -235,16 +259,18 @@ function render(){
     leaderboardList.innerHTML+=`#${i+1} ${p.name} - ${score(p)} pts<br>`;
   });
 
-  /* ADMIN LIST */
+  /* ADMIN */
   adminList.innerHTML="";
   p1.innerHTML="";
   p2.innerHTML="";
 
   players.forEach((p,i)=>{
     adminList.innerHTML+=`
-    <div>${p.name}
-    <button onclick="edit(${i})">Edit</button>
-    <button onclick="del(${i})">Del</button></div>`;
+    <div>
+      ${p.name}
+      <button onclick="editScore(${i})">Score</button>
+      <button onclick="del(${i})">Delete</button>
+    </div>`;
 
     p1.innerHTML+=`<option>${p.name}</option>`;
     p2.innerHTML+=`<option>${p.name}</option>`;
@@ -256,24 +282,6 @@ function render(){
     matchesDiv.innerHTML+=`
     ${m.p1} vs ${m.p2} → Winner: <b>${m.winner}</b><br>`;
   });
-}
-
-/* EDIT / DELETE */
-function edit(i){
-  let p=players[i];
-  name.value=p.name;
-  sword.value=p.sword;
-  uhc.value=p.uhc;
-  axe.value=p.axe;
-  mace.value=p.mace;
-  spear.value=p.spear;
-  icon.value=p.icon;
-  editIndex=i;
-}
-
-function del(i){
-  players.splice(i,1);
-  db.ref("players").set(players);
 }
 
 /* SEARCH */
@@ -297,4 +305,4 @@ db.ref("matches").on("value",s=>{
 </script>
 
 </body>
-  </html>
+</html>
