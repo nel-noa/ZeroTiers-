@@ -11,12 +11,6 @@ body{
   font-family:Arial;
   background:#0b0b0b;
   color:white;
-  animation:fade 0.4s ease-in;
-}
-
-@keyframes fade{
-  from{opacity:0}
-  to{opacity:1}
 }
 
 header{
@@ -33,10 +27,7 @@ header{
   padding:15px;
   margin-top:15px;
   border-radius:10px;
-  transition:0.2s;
 }
-
-.card:hover{transform:scale(1.01);}
 
 input,button,select{
   padding:8px;
@@ -59,12 +50,6 @@ button{
   margin:5px 0;
   border-radius:6px;
   cursor:pointer;
-  transition:0.2s;
-}
-
-.player:hover{
-  background:#3a3a3a;
-  transform:scale(1.01);
 }
 
 .rank{color:gold;}
@@ -79,18 +64,12 @@ button{
   background:#222;
   padding:15px;
   border-radius:10px;
-  animation:pop 0.3s ease;
-}
-
-@keyframes pop{
-  from{transform:scale(0.9);opacity:0}
-  to{transform:scale(1);opacity:1}
 }
 
 .profileCard img{
-  width:90px;
-  height:90px;
-  border-radius:10px;
+  width:80px;
+  height:80px;
+  border-radius:8px;
   border:2px solid orange;
 }
 </style>
@@ -130,8 +109,8 @@ button{
 
 <div class="card" id="loginBox">
 <h2>Admin Login</h2>
-<input id="u">
-<input id="p" type="password">
+<input id="u" placeholder="Username">
+<input id="p" type="password" placeholder="Password">
 <button onclick="login()">Login</button>
 </div>
 
@@ -139,7 +118,6 @@ button{
 <h2>⚙️ Admin Panel</h2>
 
 <input id="name" placeholder="Name">
-
 <input id="sword" placeholder="Sword Tier">
 <input id="uhc" placeholder="UHC Tier">
 <input id="axe" placeholder="Axe Tier">
@@ -148,7 +126,7 @@ button{
 
 <button onclick="addPlayer()">Add / Update</button>
 
-<h3>Manual Controls</h3>
+<h3>Players Control</h3>
 <div id="adminList"></div>
 
 <h3>Match System</h3>
@@ -179,14 +157,19 @@ projectId:"PUT"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-/* ADMIN */
-const ADMIN_USER="ZeroAdmin";
-const ADMIN_PASS="Z0R3T13RS#2026!";
+/* ADMIN (FIXED SAFE LOGIN) */
+const ADMINS = {
+  "ZeroAdmin":"ZT#Master2026!",
+  "Sasuke":"Uchiha#99",
+  "Owner":"ZeroTiers#ROOT"
+};
+
+let currentUser=null;
 
 /* DATA */
 let players=[];
 
-/* YOUR TIER SYSTEM */
+/* TIER SYSTEM */
 const T={
 HT1:120, LT1:90,
 HT2:60, LT2:30,
@@ -202,7 +185,7 @@ function score(p){
 return pts(p.sword)+pts(p.uhc)+pts(p.axe)+pts(p.mace)+pts(p.spear);
 }
 
-/* TITLE SYSTEM */
+/* TITLE */
 function title(s){
 if(s>=300)return "COMBAT MASTER";
 if(s>=200)return "Combat MASTER BEGINNER";
@@ -212,12 +195,18 @@ if(s>=10)return "NOOBIE";
 return "TRAINING";
 }
 
-/* LOGIN */
+/* LOGIN FIXED */
 function login(){
-if(u.value===ADMIN_USER && p.value===ADMIN_PASS){
+const u=document.getElementById("u").value;
+const p=document.getElementById("p").value;
+
+if(ADMINS[u] && ADMINS[u]===p){
+currentUser=u;
 admin.classList.remove("hidden");
 loginBox.classList.add("hidden");
-}else alert("Wrong login");
+}else{
+alert("Wrong login");
+}
 }
 
 /* ADD PLAYER */
@@ -232,7 +221,7 @@ spear:spear.value
 });
 }
 
-/* PROFILE WITH SKIN */
+/* PROFILE */
 function openProfile(p){
 profile.classList.remove("hidden");
 
@@ -294,8 +283,7 @@ p2.innerHTML+=`<option>${p.name}</option>`;
 c1.innerHTML+=`<option>${p.name}</option>`;
 c2.innerHTML+=`<option>${p.name}</option>`;
 
-adminList.innerHTML+=`
-<div>${p.name}</div>`;
+adminList.innerHTML+=`<div>${p.name}</div>`;
 });
 }
 
@@ -304,6 +292,7 @@ db.ref("players").on("value",s=>{
 players=s.val()?Object.values(s.val()):[];
 render();
 });
+
 </script>
 
 </body>
